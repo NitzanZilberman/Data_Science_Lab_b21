@@ -1,0 +1,957 @@
+---
+title: <center> <h1>"A Troll or Not a Troll? That is the question" </center> </h1>
+author: <center> <h3>Aviv Mokady, Nadav Hachamov & Nitzan Zilberman</center> </h3>
+date: <center> <h3> 31/8/2021</center> </h3>
+output: html_document
+css: CSSBackgrounds.css
+
+---
+<style type="text/css">
+  body{
+  font-family: Segoe UI;
+  font-size: 12pt;
+  }
+</style>
+
+```{r Setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, comment = '',
+                      message = FALSE, paged.print = FALSE, 
+                      dpi = 300, fig.width = 8, fig.height = 5, 
+                      fig.align = 'center')
+```
+
+## <span style="color: #0D5093;">Introduction</span>  
+
+
+<style> body {text-align: justify} </style> <!-- Justify text. -->
+
+  As the public increases its reliance on social media to receive and spread information and news, the concerns of "fake news" and misinformation are rapidly growing, and the task of telling reliable sources from made-up ones is becoming harder. Not only do people need to figure out if the anti-covid-vaccination was written by a certified doctor or an articulate butcher, but they also must worry about trolls. Unlike a layperson spreading misinformation that they truly believe in, a troll is a social media account that deliberately tries to mislead, spread specific ideological ideas, and stir up the discourse. A troll could be an automated account better known as 'bot', or a human operated account. In order to have a massive effect on the public, these trolls are sometimes managed from "troll farms" in which the trolling operation coordinates many trolls and the agenda they are spreading. One of the most famous cases is the Russian intervention in the 2016 U.S. presidential elections, also known as the Internet Research Agency (IRA), which was a coordinated operation centered at a farm in St. Petersburg (Boatwright et al., 2018).
+
+  If the mere effect of trolls ended at posting and tweeting annoying messages people could just ignore them, but unfortunately, trolls have a real effect on social discourse and thus on social behaviors and decisions. Trolls from the IRA were found to use highly polarizing language, which may have affected people's behavior (Simchon et al., 2020). Even more than that, in Turkey the government's trolls have made tweeter a non-democratic space, which helped them stable their hegemony, and citizens claim this act affected the power shift that has started and even the street language they use (Bulut & Yörük, 2017). Another aspect that trolls, and in this case also bots, have affected the social media discourse is the vaccination debate when trolls tweeted on the topic at higher rates, more polarized content, and more antivaccination messages (Broniatowski et al., 2018). Even if they did not manage to promote antivaccination, trolls did amplify and legitimize the public debate on the matter. A third example of how these trolls can affect citizens' lives is the contribution of trolls during the "Black Lives Matters" incidents. Although no causal effect could be determined, the IRA accounts were clearly within the center of discourse on both sides of the political (and racial) spectrum, with major troll accounts being extensively retweeted by other trolls (Arif et al., 2018).
+
+  In attempt to understand the phenomenon of trolls and their effects, and maybe even an attempt to reduce it, researchers have been trying to improve their ability to detect troll accounts. Most attempts recorded in recent years are based on machine learning algorithms and differ on the type of input they feed the model and the type of models they train (e.g., statistical models as xgboost, random forest, SVM, and glm or neural networks). The types of input can be roughly split into two main categories. The first are inputs that are extracted from account-related information such as the account's social network (accounts being followed and following accounts), retweet/share tendencies, activity tendencies such as number, time, and length of tweets/posts and more. The second type of input is features extracted from the content of the tweets/posts. For instance, trolls tend to be more deceptive in their content (Addawood et al., 2019), they tend to use more aggressive and negative language which can be identified through sentiment analysis (Fornacciari et al., 2018), and trolls tend to use more insults then none trolls (Bhaskaran, 2017).
+
+  In this current assignment, we received two datasets of tweets, a train set, and a test set. The training dataset contained 10,980 tweets, out of them 8,940 are tweets tweeted by regular users (~81%) and 2076 are tweets tweeted by trolls (~29%). The test dataset contains 3660 unidentified tweets. The content of the tweets is the only information we have received in order to train our model and predict which tweet was written by a user and which was written by a troll. Due to the lack of user-based information, our model was trained purely on features we extracted from the content of the tweet itself, as will be further explained in the method.
+
+
+<center>
+![](https://media0.giphy.com/media/fH9LpzpCbRNNvi3z2R/giphy.gif?cid=ecf05e47xqxfgkoka5244z719hc0mp8mttiypctezccq5l8p&rid=giphy.gif&ct=g) 
+</center>
+
+----  
+  
+  
+## <span style="color: #0D5093;">Method</span>  
+
+<style> body {text-align: justify} </style> <!-- Justify text. -->
+  
+  In this assignment, we tried to train a model on a dataset of almost 10,890 tweets labeled as either regular user tweets or troll tweets. The goal of training the model was to achieve a model that can predict if new tweets were written by regular users or troll accounts. To do so, with the content of the tweet as our only predictor, we created new features out of the content and tested how well can they differ between each type of account. After creating 13 features based on a literature overview and our own experience with trolls and their characteristics, we trained three different models based on different statistical methods of supervised learning classification. For each model we searched for the features, out of the features we created before, that will maximize the accuracy of troll-not troll classification.
+
+**<span style="color: #00A4D1;">Feature creation</span>**  
+
+<style> body {text-align: justify} </style> <!-- Justify text. -->
+
+  Before creating each feature, we cleaned the text in a different manner which will likely suit the specific feature the most. After cleaning the text, the features were created using different NLP techniques as described in these list of features we created.
+
+## {.tabset}
+
+### Glove Word Embedding
+**_Glove Word Embedding_**
+
+  We created two features based on two dimensions of word embedding vectors. First, we cleaned the data from all the symbols. We decided not to turn all the letters into small letters since we figured the placement of words with capital letters in comparison to other words could add information for the prediction. Then we created a vector for each word according to a proximity window of 5 words from each side and compressed the vector into two dimensions using the "Glove" trained algorithm. We have tested numerous proximity windows and figured that a larger window does not yield better results which is not surprising giving the length of tweets. We have also tested the number of compressed dimensions sampling different amounts between 2-50 and figured that more dimensions take up much computing power and time but do not improve our prediction ability sufficiently. After creating a two-dimensional vector for every word in our dataset, we averaged the scores of every word in each tweet for each dimension, thus creating two features for each tweet.
+<br>
+
+### Label specific words
+**_Label specific words_**
+
+  Two more features were created by splitting the unclean data into two separate sets containing either all troll tweets or all none-troll tweets. Then, on the two separate datasets, we created a document-term matrix (DTM) which was filtered for all terms that are more frequent than 2. For each DTM we ran a TF-IDF algorithm to find the relative weight of each word or symbol within the troll tweets and the none-troll tweets. To utilize the words that are highly weighed in one of the categories but not in the other we computed the difference in the term weight between the categories. Eventually, we used only the terms or symbols that their difference between categories was more than 1.5 SD to either direction. With this final list of terms and weights, we created the two features. The first is called "Troll_Weight" which is the sum of the number of times each term with a relatively high weight for troll tweets is in each tweet, times its weight. Thus, a tweet that contains many terms that are relatively high in their troll weight will have a high score in the "troll_weight" feature. The second feature is called "Real_Weight" and it was created in the same manner only computed by the terms that are relatively high weighed for none-troll tweets.
+<center>
+<br>
+
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/Rplot09.png){width=70%}
+
+<sup>_Figure 1_: Comparison between the 15 most differentiate terms in trolls and real tweets. We can see they are completely different from each other, which might affect the classification latter.</sup>
+
+</center>
+
+
+### Capital letters
+**_Capital letters_**
+
+  Assuming that trolls try to ignite the online discourse we postulated that they would use more capital letters in their tweets, that is because capital letters are a form of expressing anger or urgency in written text. We created two features based on the use of capital letters, the first is the percentage of words in the tweet that begin with a capital letter, and the second is the percentage of words in the tweet that are written completely in uppercase letters.
+<br>
+
+### Length of the tweet
+**_Length of the tweet_**
+
+  This feature, also seen in previous works of troll detection (Fornacciari et al., 2018), is simply the number of tokens in each tweet when counting the cleaned-up tokens. That is purely the number of words in each tweet, no symbols were accounted for. Troll tweets had a mean length of 13.6 (_SD_ = 8.06) ranging between 1-54. Regular tweets had a mean length of 12.6 words per tweet (_SD_ = 9.97) ranging between 1-342 (only 26 tweets were longer than 54 words).
+<br>
+
+### Insults
+**_Insults_**
+
+  We created the insults, or swears, feature using the profanity lexicon from the "Lexicon" R package (Wu, 2008). Specifically, we used the 'Alvarez', 'Banned', and 'arr_bad' lexicons. Using the uncleaned tokens we created two features, the first was the count of insult words from this lexicon in each tweet, and the second is the percentage of insult words from the lexicon in each tweet compared with the number of tokens within that tweet. Troll tweets use an average of 0.91 insults per tweet (_SD_ = 0.83) ranging between 0-12, while regular tweets use an average of 0.42 insults per tweet (_SD_ = 0.61) ranging between 0-7.
+
+<center>
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/Rplot.png){width=70%}
+
+<sup>_Figure 2_: Percentage of the 12 most common insults in real and troll tweets. We can see that they are more common in troll tweets than in real ones.</sup>
+
+</center>
+<br>
+
+### Sentiment analysis
+**_Sentiment analysis_**
+
+  Using the "Bing" lexicon (Minqing & Bing, 2004) for sentimental words we retrieved a corpus of positive and negative words. According to this corpus we created four features, two for the positivity of the tweet and two for the negativity of the tweet. For both sentiments, the first feature was simply the number of positive (or negative) words, and the second was the percentage of positive (or negative) words in the tweet out of all the words. In these features, we again used the tokens that were cleaned from symbols and that were all in lower-case letters, for there is no reason for us to differentiate between the same negative word if in one case it has an upper-case letter and in another case it doesn't. On average troll tweets received a positivity score of 0.44 (_SD_ = 0.73) and a negativity score of 1.36 (_SD_ = 1.15), while the regular tweets received a positivity score of 0.51 (_SD_ = 0.79) and a negativity score of 0.8 (_SD_ = 0.93).
+<br>
+
+{-}
+---- 
+
+**<span style="color: #00A4D1;">The models that we used</span>** 
+
+
+  After creating all the features explained here, we started to test the different statistical classification models, all trained using Caret package (Kuhn ,2008). Each model was tested with 5 cross-validations and was searched for the best hyper-parameters and best predictors. 
+  
+  All the models were trained on different sets of features to make sure the optimal set of predictors repeats itself. We report here the results of models that were tested with all the features and with the top 9 features selected according to their influence on the prediction.
+  
+  Each model was tested with predictions made by different decision criterions. The models were evaluated according to their accuracy and 'kappa' parameter on the train-set, and according to their accuracy predicting a random 50% of the test data by submitting the prediction to the competition site on Kaggle.
+
+
+
+## {.tabset}
+
+### Logistic Regression with Elastic Net
+**_Logistic Regression with Elastic Net_**  
+
+  A logistic regression model is a classification model that is well equipped to classify into two categories (e.g., "troll" \ "not a troll") according to continuous predicters. The final classification is done by computing the probability of each category based on the value of predicters. The criterion of the decision can be changed to give the best prediction.
+The logistic regression in the machine learning algorithm was accompanied by Elastic Net, which is a learning model that helps to choose the best predicters. The elastic net is a combination of Ridge Regression and Lasso which are two ways of penalizing additional predictors, thus forcing them to contribute enough to the prediction to 'justify’ their being in the model. The weight distribution between the two types of penalizations is one of the hyper-parameters fitted to maximize the model's accuracy while learning (called 'Alpha'). The other hyper-parameter is 'Lambda' which is the size of the penalization within each of the two types and it was also fitted to maximize the model's learning efficiency.
+<br>
+
+
+### Gradient Boosting (XGboost)
+**_Gradient Boosting (XGboost)_**  
+
+  A gradient boosting model is a classifying statistical model based on regular decision trees, it differs from decision trees in the researcher's ability to determine the hyper-parameters when training the model. The hyper-parameters optimized in this model are- the number of trees created in each iteration (nrounds), the interaction depth which is the number of levels of branches within each tree (max_depth), 'Gamma' which is a regularization parameter that limits the number of splits in a tree by allowing a split to occur only if it reduces enough loss, 'Eta' which is the learning rate of the model (or shrinkage), the ratio of columns selected to be used for every new tree (colsample_bytree), the minimum sum of instance weight that will still resolve in another split (min_child_weight), and the ratio of data randomly sampled data from the dataset before growing trees (subsample). 
+<br>
+
+### Random Forest
+**_Random Forest_** 
+
+  The random forest algorithm is, as the gradient boosting algorithm, based on the concept of a decision tree. The random forest generates many trees by creating each new decision tree on a different sample of observation peaked from the original dataset by bootstrapping, and on a different number of predictors selected randomly, thus creating many different trees. This procedure improves the model's accuracy, but more importantly, it decreases the chance of overfitting because of the generation of many different trees. As the model chooses each time a different number of predicters, one of its results is a hyper-parameter recommending the best number of predictors and their identity.
+<br>
+
+
+{-}
+---- 
+
+## <span style="color: #0D5093;">Results</span>  
+
+  In this section we will describe the results of each model considering the hyper-parameters chosen for the model's best fit, the major predictors chosen in each model, and criterion of decision (See figure 3) . All of these were tested by assessing the accuracy and 'kappa' parameter on the training set, and the accuracy of the test data prediction (See figure 4).
+
+<center>
+
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/Rplot08.png)
+
+<sup>_Figure 3_: Distributions for the three models. Accuracy more stable for Random forest, and Kappa is consistantly higher for Random forest.</sup
+ 
+</center>
+
+  As seen in figure 4, the logistic regression models have provided the smallest accuracy on the training data prediction, they both had a very low kappa value, but preformed similar to the rest of the models when predicting the test data. The gradient boosting models has predicted with accuracy of 89%-91% on the test data. But its prediction on the training dataset and kappa values were unsatisfying with the highest kappa being 0.42 and the highest training accuracy was 86% (both in the model the given all the predictors). Finally, the random forest models preformed best when considering both kappa values, training prediction accuracy and test prediction accuracy.
+
+<center>
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/table.png)
+
+<sup>_Figure 4_: Summerize some of the models we tried. The last row present the final model we used.</sup>
+
+<br>
+
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/comparison.png)
+
+<sup>_Figure 5_: Comparison between the confusion matrices of the three models.</sup>
+
+</center>
+
+
+  We have chosen as our final model to use the random forest model, trained on the top 9 best predictors with a decision criterion of 0.4, as shown in the last row in figure 4. This model is less likely to over-fit to the train data, that is because of the random forest characteristics, and the combination of highest test accuracy but not the highest train accuracy. See figure 6 for the variables importance.
+
+<center>
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/Rplot04.png)
+
+<sup>_Figure 6_: The importance of the predictors. </sup>
+
+</center>
+
+---- 
+## <span style="color: #0D5093;">Applying the model on other data</span>
+
+  We know that trolls are a major danger in many social media platforms and are not exclusive to tweeter only. We also understand that our model isn’t close to being perfect but can it be applied to other platform’s trolls detection?
+To answer this question, we found a website who gather from Reddit website and the author's task was to identify posts that can be classified as [Russian propagandists](https://medium.com/@bpunt/predicting-russian-trolls-using-reddit-comments-83e51c32776f). 
+
+<center>
+![](https://i.kym-cdn.com/photos/images/original/000/186/344/1318696758001.jpg){width=20%}
+</center>
+<br>
+
+  The data collected was separated into two datasets, one of troll posts (6711 posts) and another of regular posts (45,149). We randomly selected 4,444 regular posts and 1,037 troll posts to create a post-type labeled dataset that is equivalent to half of the train dataset with the same troll-no troll ratio. 
+  Our model managed to correctly classified 80.28% of the dataset, which is far from perfect but it is satisfying enough to know that the model is in the right direction (and that our model can also be applied to troll detection in other contexts).
+
+<center>
+![](C:/Users/Nitzan/OneDrive - post.bgu.ac.il/C/MA/1/Data science lab/5 Assignment - Final/Rplot07.jpg){width=40%}
+
+<sup>_figure 7_: Confusion matix for predicting the Reddit data.</sup>
+
+</center>
+
+  This extra exercise is a good example of why training the model on varied data can help reduce the over-fitting problem and may revile interesting insights on trolls' detection methods, especially the comparison between trolls' behavior on different platforms.
+
+
+---- 
+
+## <span style="color: #0D5093;">Discussion</span> 
+
+  In the current assignment, we’ve tried to demonstrate the use of varied natural language processing methods, combined with machine learning techniques to cluster actual data taken from tweeter posts. For the language processing, we’ve used word embedding and TD-IDF approaches to produce informative variables that can later be used for classifying the tweets to troll or regular posts. For analysis, we compared the performance of 3 distinct machine learning models which yield worth-mentioning predictions. Overall our trained models manage to correctly predict 90.395% of the test data, although the entire test data accuracy is not yet available to us. 
+
+  Using Glove word embedding model shared an interesting insight on the troll detection method. We expected that having many dimensions for each tweet as different variables would be highly distinctive between the regular and the trolling tweets. However, all of our models didn’t support having more than two dimensions as independent variables, which question the use of word embedding (or at least glove WE) as a valid method for classification. We presume this could be due to (a)relatively small learning data for word embedded vectors, (b)it might be the result of non-repetitive enough connections in writing in this style (compared to more fluent writing) or (c) our use of averaging the word vectors per tweet might have backlashed at our intentions. Moreover, extracting the frequency of usage of specific morphological entities (e.g., words, sentiments, capital letters) revealed interesting points about content differences and the writing form between trolls and ‘regular’ posts. One possible way to look at it is that in order to mimic human writing, trolls’ algorithm must have some sort of writing pattern that relies on certain emphases and is more one-sided in its semantic direction for stirring up the discourse.
+
+  To summarize, we did manage to classify most of the trolls from the non-troll posts based only on the features that we extracted from the text itself and without any context or user information. We did run into an over-fitting problem, which was somewhat relieved with the use of RF as our predictive model for its robustness to over-fitting, and by applying the model to another data set.  Nevertheless, we assume our model was prone to apply more to the train data than the test data. We enjoyed the task, and we were very challenged by it. It is fascinating to see how much we can learn from raw data and to think of the implication that can be available by using the raw data with more valuable information that we were missing. We are also eager to compare our task with our peers to see the mutual and distinctive features that were made.    
+  
+<center><h1><span style="color: #00A4D1;">Thank you!</span></center> </h1>
+
+<center>![](https://media2.giphy.com/media/KGMOaKUInCvaP2An43/giphy.gif?cid=ecf05e472cmz148x11inqeda1avv2i75h6j8d2j6fn6xkk3c&rid=giphy.gif&ct=g)</center>
+
+----
+
+## <span style="color: #0D5093;">References</span> 
+  
+Addawood, A., Badawy, A., Lerman, K., & Ferrara, E. (2019, July). Linguistic cues to deception: Identifying political trolls on social media. _In Proceedings of the international AAAI conference on web and social media_ (Vol. 13, pp. 15-25).
+
+Arif, A., Stewart, L. G., & Starbird, K. (2018). Acting the part: Examining information operations within# BlackLivesMatter discourse. _Proceedings of the ACM on Human-Computer Interaction_, 2(CSCW), 1-27.
+
+Bhaskaran, J., Kamath, A., & Paul, S. (2017). DISCo: Detecting insults in social commentary.
+
+Boatwright, B. C., Linvill, D. L., & Warren, P. L. (2018). Troll factories: The internet research agency and state-sponsored agenda building. _Resource Centre on Media Freedom in Europe_, 29.
+
+Broniatowski, D. A., Jamison, A. M., Qi, S., AlKulaib, L., Chen, T., Benton, A., ... & Dredze, M. (2018). Weaponized health communication: Twitter bots and Russian trolls amplify the vaccine debate. _American journal of public health_, 108(10), 1378-1384.
+
+Bulut, E., & Yörük, E. (2017). Mediatized populisms| Digital populism: Trolls and political polarization of Twitter in Turkey. _International Journal of Communication_, 11, 25.
+
+Fornacciari, P., Mordonini, M., Poggi, A., Sani, L., & Tomaiuolo, M. (2018). A holistic system for troll detection on Twitter. _Computers in Human Behavior_, 89, 258-268.
+
+Kuhn, M. (2008). Caret package. Journal of Statistical Software, 28(5).
+
+Minqing, H., and Bing, L. (2004). Mining and summarizing customer reviews. Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery & Data Mining.
+
+Simchon, A., Brady, W. J., & Van Bavel, J. J. (2020). Troll and divide: The language of online polarization.
+
+Wu, L., Morstatter, F., and Liu, H. (2016). SlangSD: Building and using a sentiment dictionary of slang words for short-text sentiment classification. CoRR. abs/1168.1058. 1-15.
+
+----
+
+## <span style="color: #0D5093;">Appendix</span> 
+  
+Here you can see the entire code that was used to make the predictions:  
+
+
+
+```{r pressure, include=TRUE,eval=FALSE, message = FALSE, warning=FALSE}
+
+library(dplyr)
+library(tidyverse)
+library(readtext)
+library(quanteda)
+library(stringi)
+library(rtweet)
+library(topicmodels)
+library(text2vec)
+library(tokenizers)
+library(data.table)
+library(caret)
+library(useful)
+library(xgboost)
+library(tidytext)
+library(ggplot2)
+library(mlbench)
+
+# Train ------------------------------------------------------------------------
+
+train <- read.csv(file="train.csv", header = T)
+
+train$label <- as.factor(train$label)
+
+##### Cleaning and tokens #####
+
+train$content_clean <- str_replace_all(train$content, "[[:punct:]]", "") 
+train$content_clean <- tolower(train$content_clean)
+
+train$tokens_clean <- tokenize_ptb(train$content_clean)
+train$tokens_reg <- tokenize_ptb(train$content)
+
+##### Glove #####
+
+troll_it  <-  itoken(train$tokens_clean, progressbar = F )
+troll_vocab <- create_vocabulary(troll_it)
+troll_vectorizer <- vocab_vectorizer(troll_vocab)
+
+troll_tcm <- create_tcm(troll_it, troll_vectorizer, skip_grams_window = 5L,
+                     skip_grams_window_context = c("symmetric"))
+
+ndims <- 2
+troll_glove = GlobalVectors$new(rank = ndims, x_max = 10)
+troll_glove$fit_transform(troll_tcm, n_iter = 30)
+
+#word vectors
+troll_word_vectors <- as.data.frame(troll_glove$components)
+
+train$dm1 <- 0
+train$dm2 <- 0
+
+for (i in 1:nrow(train)) {
+  temp_cols <- colnames(troll_word_vectors) %in% as.vector(unlist(train$tokens_clean[i]))
+  train$dm1[i] <- mean(as.numeric(as.vector(troll_word_vectors[1, temp_cols])))
+  train$dm2[i] <- mean(as.numeric(as.vector(troll_word_vectors[2, temp_cols])))
+}
+
+
+##### tf-idf #####
+          
+## Trolls
+
+troll <- train %>% filter(label==1)
+troll_token_reg <- troll$tokens_reg
+
+dtm_t <- dfm(tokens(troll_token_reg))
+
+doc_freq_t <- docfreq(dtm_t)         # document frequency per term (column)
+dtm_highfreq_t <- dtm_t[, doc_freq_t >= 2]      # select terms with doc_freq >= 2
+dtm_idf_t <- dfm_tfidf(dtm_highfreq_t, force = TRUE)
+
+fit1 <- as.data.frame(colMeans(as.matrix(dtm_idf_t)))
+fit1 <- rownames_to_column(fit1)
+colnames(fit1) <- c("term", "mean_weight_troll")
+fit1 <- fit1[order(fit1$mean_weight,decreasing = TRUE),]
+
+## Real
+
+real <- train %>% filter(label==0)
+real_token_reg <- real$tokens_reg
+
+dtm_r <- dfm(tokens(real_token_reg))
+
+doc_freq_r <- docfreq(dtm_r)         # document frequency per term (column)
+dtm_highfreq_r <- dtm_r[, doc_freq_r >= 2]      # select terms with doc_freq >= 2
+dtm_idf_r <- dfm_tfidf(dtm_highfreq_r, force = TRUE)
+
+fit2 <- as.data.frame(colMeans(as.matrix(dtm_idf_r)))
+fit2 <- rownames_to_column(fit2)
+colnames(fit2) <- c("term", "mean_weight_real")
+fit2 <- fit2[order(fit2$mean_weight,decreasing = TRUE),]
+
+## Combine
+
+words <- merge(fit1, fit2, by.x = "term", by.y = "term", all.x = FALSE, all.y = FALSE)
+words$diff <- scale(words$mean_weight_troll-words$mean_weight_real)
+words_ex_troll <- filter(words, diff > 1.5)
+words_ex_real <- filter(words, diff < -1.5)
+
+train[,c("troll_whight", "real_whight")] <- 0
+
+for (i in 1:nrow(train)) {
+  for (k in 1:nrow(words_ex_troll)){
+    temp_count <- sum(as.vector(unlist(train$tokens_reg[i])) %in% words_ex_troll$term[k])*words_ex_troll$diff[k]
+    train$troll_whight[i] <- train$troll_whight[i]+temp_count
+  }
+  for (j in 1:nrow(words_ex_real)){
+    temp_count <- sum(as.vector(unlist(train$tokens_reg[i])) %in% words_ex_real$term[j])*words_ex_real$diff[j]
+    train$real_whight[i] <- train$real_whight[i]+temp_count
+  }
+}
+
+## Visualization
+
+troll_graph <- words_ex_troll %>% top_n(15, diff) %>% 
+  ggplot( aes(x=reorder(term, mean_weight_troll),y=mean_weight_troll)) +
+  coord_flip() +
+  geom_col() +
+  labs(y = "Mean TF-IDF ", x="Terms", title = "TOP 15 Terms Indicating 'Trolls'")+
+  geom_bar(position = "dodge", stat = "identity", fill = "#fff281") +
+  theme_bw()+
+  theme(legend.position = "none")
+
+real_graph <- words_ex_real %>% top_n(-15, diff)  %>% 
+  ggplot( aes(x=reorder(term, mean_weight_real),y=mean_weight_real)) +
+  geom_col() +
+  coord_flip() +
+  labs(y = "Mean TF-IDF", x="Terms", title = "TOP 15 Terms Indicating 'Reals'")+
+  geom_bar(position = "dodge", stat = "identity",fill="#00A4D1") +
+  theme_bw()+
+  theme(legend.position = "none")
+
+cowplot::plot_grid(troll_graph, real_graph, labels = "AUTO")
+
+##### Uppercases #####
+
+for (i in 1:nrow(train)){
+  train$upper_s[i] <-  sum(str_detect(as.vector(unlist(train$tokens_reg[i])),"[[:upper:]]")) / length(as.vector(unlist(train$tokens_reg[i])))
+  train$upper_w[i] <- sum(upper.case(as.vector(unlist(train$tokens_reg[i])))) / length(as.vector(unlist(train$tokens_reg[i])))
+}
+
+
+##### Swears #####
+
+swears <- c(lexicon::profanity_alvarez,
+            lexicon::profanity_arr_bad,
+            lexicon::profanity_banned)
+swears <- (unique(swears))
+
+train$swears <- 0
+train$swears_s <- 0
+
+for (i in 1:nrow(train)) {
+  for (k in 1:length(swears)){
+    temp_count <- sum(as.vector(unlist(train$tokens_clean[i])) %in% swears[k])
+    train$swears[i] <- train$swears[i]+temp_count
+    train$swears_s[i] <- train$swears[i] / length(as.vector(unlist(train$tokens_clean[i])))
+  }}
+
+### Visualization
+
+## Swears for trolls
+
+sum_swears_t <- c(0)
+sum_swears_t[1:771] <- 0
+for (i in 1:length(swears)){
+  for (k in 1:nrow(troll)){
+    temp_count <- sum(swears[i] %in% as.vector(unlist(troll$tokens_clean[k])))
+    sum_swears_t[i] <- sum_swears_t[i]+temp_count
+  }
+}
+
+## Swears for real
+
+sum_swears_r <- c(0)
+sum_swears_r[1:771] <- 0
+for (i in 1:length(swears)){
+  for (k in 1:nrow(real)){
+    temp_count <- sum(swears[i] %in% as.vector(unlist(real$tokens_clean[k])))
+    sum_swears_r[i] <- sum_swears_r[i]+temp_count
+  }
+}
+
+mean(train$swears[train$label == 1])  # 0.9118497
+sd(train$swears[train$label == 1])    # 0.83619
+range(train$swears[train$label == 1]) # 0-12
+
+mean(train$swears[train$label == 0])  # 0.4290207
+sd(train$swears[train$label == 0])    # 0.6162593
+range(train$swears[train$label == 0]) # 0-7
+
+## Combine
+
+swears_count <- as.data.frame(cbind(swears, sum_swears_r, sum_swears_t))
+swears_count$sum_swears_r <- as.numeric(swears_count$sum_swears_r) / nrow(real)
+swears_count$sum_swears_t <- as.numeric(swears_count$sum_swears_t) / nrow(troll)
+
+swears_top <- swears_count %>% filter(sum_swears_r >0.01)
+swears_top$swears <- as.factor(swears_top$swears)
+
+swears_top <- reshape(swears_top, 
+                        varying = c("sum_swears_r","sum_swears_t"),
+                        timevar = "label",
+                        direction = "long",  
+                        v.names = "count",
+                        idvar = "swears")
+
+swears_top$label[swears_top$label==1] <- 0
+swears_top$label[swears_top$label==2] <- 1
+swears_top$swears <- as.factor(swears_top$swears)
+swears_top$label <- as.factor(swears_top$label)
+swears_top$count <- as.numeric(swears_top$count)
+
+ggplot(swears_top) +
+ aes(x = reorder(swears, count), fill = label, weight = count) +
+ geom_bar() +
+ scale_fill_manual(values = list(`0` = "#00A4D1", `1` = "#fff281"), label = c("Not a troll", "Troll")) +
+ theme_minimal() +
+  labs(title = "Percentage of the 12-common swears in real and troll tweets",
+       y = "Percentage",
+       x = "Swears")
+
+
+##### Number of words #####
+
+for (i in 1:nrow(train)) {
+  train$num_words[i] <- length(as.vector(unlist(train$tokens_clean[i])))}
+
+### Descriptive statistic
+
+mean(train$num_words[train$label == 1])  # 13.64788
+sd(train$num_words[train$label == 1])    # 8.06616
+range(train$num_words[train$label == 1]) # 1-54
+
+mean(train$num_words[train$label == 0])  # 12.66094
+sd(train$num_words[train$label == 0])    # 9.974084
+range(train$num_words[train$label == 0]) # 1-342
+
+sum(train$num_words[train$label == 0]>54)
+
+##### Positive-Negative #####
+
+positive <- get_sentiments("bing") %>%
+  filter(sentiment == "positive")
+positive <- as.vector(positive$word)
+
+negative <- get_sentiments("bing") %>%
+  filter(sentiment == "negative")
+negative <- as.vector(negative$word)
+
+train$positive <- 0
+train$positive_s <- 0
+train$negative <- 0
+train$negative_s <- 0
+
+count(unique(positive))
+for (i in 1:nrow(train)) {
+  for (k in 1:length(positive)){
+    temp_count <- sum(as.vector(unlist(train$tokens_clean[i])) %in% positive[k])
+    train$positive[i] <- train$positive[i]+temp_count
+    train$positive_s[i] <- train$positive[i] / length(as.vector(unlist(train$tokens_clean[i])))
+  }
+}
+
+for (i in 1:nrow(train)) {
+  for (k in 1:length(negative)){
+    temp_count <- sum(as.vector(unlist(train$tokens_clean[i])) %in% negative[k])
+    train$negative[i] <- train$negative[i]+temp_count
+    train$negative_s[i] <- train$negative[i] / length(as.vector(unlist(train$tokens_clean[i])))
+  }
+}
+
+
+## Descriptive statistics
+
+mean(train$positive[train$label == 1])  # 0.4431
+sd(train$positive[train$label == 1])    # 0.739
+range(train$positive[train$label == 1]) # 0-6
+
+mean(train$positive[train$label == 0])  # 0.517
+sd(train$positive[train$label == 0])    # 0.795
+range(train$positive[train$label == 0]) # 0-13
+
+mean(train$negative[train$label == 1])  # 1.306
+sd(train$negative[train$label == 1])    # 1.515
+range(train$negative[train$label == 1]) # 0-51
+
+mean(train$negative[train$label == 0])  # 0.806
+sd(train$negative[train$label == 0])    # 0.933
+range(train$negative[train$label == 0]) # 0-10
+
+##### Export #####
+
+train_save <- train %>%
+  select(-c("tokens_clean","tokens_reg"))
+write.csv(file = "train_full.csv", train_save)
+
+# Test ------------------------------------------------------------------------
+
+test <- read.csv("test.csv", header = T)
+
+##### Cleaning and tokens #####
+
+test$content_clean <- str_replace_all(test$content, "[[:punct:]]", "") 
+test$content_clean <- tolower(test$content_clean)
+
+test$tokens_clean <- tokenize_ptb(test$content_clean)
+test$tokens_reg <- tokenize_ptb(test$content)
+
+##### Glove #####
+
+test$dm1 <- NA
+test$dm2 <- NA
+
+for (i in 1:nrow(test)) {
+  temp_cols <- colnames(troll_word_vectors) %in% as.vector(unlist(test$tokens_clean[i]))
+  test$dm1[i] <- mean(as.numeric(as.vector(troll_word_vectors[1, temp_cols])),na.rm = T)
+  test$dm2[i] <- mean(as.numeric(as.vector(troll_word_vectors[2, temp_cols])),na.rm = T)
+}
+
+test$dm1 <- ifelse(is.na(test$dm1), 0, test$dm1)
+test$dm2 <- ifelse(is.na(test$dm2), 0, test$dm2)
+
+##### tf-idf #####
+
+test[,c("troll_whight", "real_whight")] <- 0
+
+for (i in 1:nrow(test)) {
+  for (k in 1:nrow(words_ex_troll)){
+    temp_count <- sum(as.vector(unlist(test$tokens_reg[i])) %in% words_ex_troll$term[k])*words_ex_troll$diff[k]
+    test$troll_whight[i] <- test$troll_whight[i]+temp_count
+  }
+  for (j in 1:nrow(words_ex_real)){
+    temp_count <- sum(as.vector(unlist(test$tokens_reg[i])) %in% words_ex_real$term[j])*words_ex_real$diff[j]
+    test$real_whight[i] <- test$real_whight[i]+temp_count
+  }
+}
+
+##### Uppercases #####
+
+for (i in 1:nrow(test)){
+  test$upper_s[i] <-  sum(str_detect(as.vector(unlist(test$tokens_reg[i])),"[[:upper:]]")) / length(as.vector(unlist(test$tokens_reg[i])))
+  test$upper_w[i] <- sum(upper.case(as.vector(unlist(test$tokens_reg[i])))) / length(as.vector(unlist(test$tokens_reg[i])))
+}
+
+
+##### Swears #####
+
+test$swears <- 0
+
+for (i in 1:nrow(test)) {
+  for (k in 1:length(swears)){
+    temp_count <- sum(as.vector(unlist(test$tokens_clean[i])) %in% swears[k])
+    test$swears[i] <- test$swears[i]+temp_count
+    test$swears_s[i] <- test$swears[i] / length(as.vector(unlist(test$tokens_clean[i])))
+  }}
+
+
+#### Number of words #####
+
+for (i in 1:nrow(test)) {
+  test$num_words[i] <- length(as.vector(unlist(test$tokens[i])))}
+
+
+##### Positive-Negative #####
+
+test$positive <- 0
+test$positive_s <- 0
+test$negative <- 0
+test$negative_s <- 0
+
+for (i in 1:nrow(test)) {
+  for (k in 1:length(positive)){
+    temp_count <- sum(as.vector(unlist(test$tokens_clean[i])) %in% positive[k])
+    test$positive[i] <- test$positive[i]+temp_count
+    test$positive_s[i] <- test$positive[i] / length(as.vector(unlist(test$tokens_clean[i])))
+  }
+}
+
+for (i in 1:nrow(test)) {
+  for (k in 1:length(negative)){
+    temp_count <- sum(as.vector(unlist(test$tokens_clean[i])) %in% negative[k])
+    test$negative[i] <- test$negative[i]+temp_count
+    test$negative_s[i] <- test$negative[i] / length(as.vector(unlist(test$tokens_clean[i])))
+  }
+}
+
+##### Export #####
+
+test_save <- test %>%
+  select(-c("tokens_clean","tokens_reg"))
+write.csv(file = "test_full.csv", test_save)
+
+# Preparations for modeling -----------------------------------------------------
+
+colnames(train)
+
+all13 <- c("dm1", "dm2", "troll_whight", "real_whight", "upper_s", "upper_w",
+               "swears", "swears_s", "num_words", "positive", "positive_s",
+               "negative","negative_s")
+
+top10 <- c("dm1", "dm2", "troll_whight", "real_whight", "upper_s", "upper_w",
+           "swears_s", "num_words", "positive_s", "negative_s")
+
+top9 <- c("dm1", "dm2", "troll_whight", "real_whight", "upper_s", "upper_w",
+          "swears_s", "positive_s", "negative_s")
+
+top4 <- c("upper_w", "swears_s", "positive_s", "negative_s")
+
+train <- na.omit(train)
+
+# Logistic Regression ----------------------------------------------------------
+
+
+##### Modeling #####
+
+set.seed(2)
+lambda <- 10 ^ seq(10, -2, length = 100)
+alpha <- seq(0, 1, length = 50)
+
+LogReg_fit <- train(label ~ #the outcome
+                     ., # selected features
+                   data = train[,c(top9,"label")], 
+                   method = "glmnet",
+                   family = "binomial",
+                   tuneGrid = expand.grid(alpha = alpha, lambda = lambda),
+                   trControl =  trainControl(method = "cv", number = 5))
+
+##### Assessment #####
+
+LogReg_assess <- predict(LogReg_fit, type = "prob")
+LogReg_assess$bi <- as.factor(ifelse(LogReg_assess[2]>0.4,1,0))
+LogReg_con <- confusionMatrix(LogReg_assess$bi, train$label)
+
+coef(LogReg_fit$finalModel, s=0)
+
+
+##### Predict #####
+
+LogReg_pred <- predict(LogReg_fit,
+                    newdata = test[,top9],
+                    type="prob")
+
+LogReg_pred$bi <- ifelse(LogReg_pred[2]>0.4,1,0)
+
+LogReg_submition <- data.frame(Id = 1:nrow(LogReg_pred), Category= as.numeric(LogReg_pred$bi))
+mean(LogReg_submition$Category)
+
+write.csv(file = "submition_LogReg.csv", LogReg_submition)
+
+
+# XG-boost ---------------------------------------------------------------------
+
+
+##### Modeling #####
+
+set.seed(2)
+
+xgb_tuneGrid <- expand.grid(
+  nrounds = 500,
+  max_depth = c(4,6,8),
+  eta = c(0.05, 0.01, 0.1),
+  gamma = c(0.05, 0.01),
+  colsample_bytree = c(0.5,0.9),
+  min_child_weight = c(1,3),
+  subsample = 0.5)
+
+xgb_fit <- train(label ~ #the outcome
+                     ., # selected features
+                   data = train[,c(top9,"label")], 
+                   method = "xgbTree",
+                   trControl = trainControl(method = "cv",number = 5),
+                   tuneGrid = xgb_tuneGrid)
+
+
+##### Assessment #####
+
+xgb_fit
+xgb_assess <- predict(xgb_fit, type = "prob")
+xgb_assess$bi <- as.factor(ifelse(xgb_assess[2]>0.4,1,0))
+
+xgb_con <- confusionMatrix(xgb_assess$bi, train$label)
+
+
+##### Predict #####
+
+xgb_pred <- predict(xgb_fit,
+                newdata = test[,top9],
+                type="prob")
+
+xgb_pred$bi <- ifelse(xgb_pred[2]>0.4,1,0)
+
+xgb_submition <- data.frame(Id = 1:nrow(xgb_pred), Category= as.numeric(xgb_pred$bi))
+mean(xgb_submition$Category)
+
+write.csv(file = "submition_xgb.csv", xgb_submition)
+
+
+# Random Forest ----------------------------------------------------------------
+
+
+##### Modeling #####
+
+set.seed(2)
+
+rf_tuneGrid <- expand.grid(.mtry = c(1:9))
+
+rf_fit <- train(label ~ ., 
+                data = train[,c(top9,"label")],
+                method = "rf",
+                tuneGrid = rf_tuneGrid,
+                trControl = trainControl(method = "cv",
+                                         number = 5))
+
+##### Assessment #####
+
+plot(rf_fit)
+plot(rf_fit$finalModel)
+varImp(rf_fit$finalModel)
+randomForest::varImpPlot(rf_fit$finalModel)
+
+rf_assess <- predict(rf_fit, type = "prob")
+rf_assess$bi <- as.factor(ifelse(rf_assess[2]>0.4,1,0))
+rf_con <- confusionMatrix(rf_assess$bi, train$label)
+
+##### Predict #####
+
+rf_pred <- predict(rf_fit,
+                newdata = test[,top9],
+                type="prob")
+
+rf_pred$bi <- ifelse(rf_pred[2]>0.4,1,0)
+
+rf_submition <- data.frame(Id = 1:nrow(rf_pred), Category= as.numeric(rf_pred$bi))
+mean(rf_submition$Category)
+
+write.csv(file = "submition_rf.csv", rf_submition)
+
+
+# Visualization ----------------------------------------------------------------
+
+##### Results #####
+
+results <- resamples(list(LogRed=LogReg_fit, XGB=xgb_fit, RF=rf_fit))
+
+# summarize the distributions
+summary(results)
+
+# boxplots of results
+bwplot(results)
+
+
+##### Confusion matrices ######
+
+# LogReg
+
+LogReg_table <- as.table(matrix(as.vector(LogReg_con$table), nrow = 2, byrow = TRUE, ))
+LogReg_table <- t(LogReg_table)
+fourfoldplot(LogReg_table, color = c( "#00A4D1", "#FFFE81"), std = "all.max",
+                            conf.level = 0, margin = 1, main = "Confusion Matrix For LogReg")
+
+# XGB
+
+xgb_table <- as.table(matrix(as.vector(xgb_con$table), nrow = 2, byrow = TRUE, ))
+xgb_table <- t(xgb_table)
+xgb_conf <- fourfoldplot(xgb_table, color = c( "#00A4D1", "#FFFE81"), std = "all.max",
+                         conf.level = 0, margin = 1, main = "Confusion Matrix For XGB")
+
+# RF
+
+rf_table <- as.table(matrix(as.vector(rf_con$table), nrow = 2, byrow = TRUE, ))
+rf_table <- t(rf_table)
+rf_conf <- fourfoldplot(rf_table, color = c( "#00A4D1", "#FFFE81"), std = "all.max",
+             conf.level = 0, margin = 1, main = "Confusion Matrix For RF")
+
+##### XGB decision tree #####
+
+# plot the 200th tree
+
+gr <- xgb.plot.tree(model = xgb_fit$finalModel, trees = 200, plot_width = 1500, plot_height = 1900)
+
+# Reddit ------------------------------------------------------------------------
+
+reddit <- read.csv("reddit_dat.csv", header = T)
+
+##### Cleaning and tokens #####
+
+reddit$content_clean <- str_replace_all(reddit$content, "[[:punct:]]", "") 
+reddit$content_clean <- tolower(reddit$content_clean)
+
+reddit$tokens_clean <- tokenize_ptb(reddit$content_clean)
+reddit$tokens_reg <- tokenize_ptb(reddit$content)
+
+##### Glove #####
+
+reddit$dm1 <- NA
+reddit$dm2 <- NA
+
+for (i in 1:nrow(reddit)) {
+  temp_cols <- colnames(troll_word_vectors) %in% as.vector(unlist(reddit$tokens_clean[i]))
+  reddit$dm1[i] <- mean(as.numeric(as.vector(troll_word_vectors[1, temp_cols])),na.rm = T)
+  reddit$dm2[i] <- mean(as.numeric(as.vector(troll_word_vectors[2, temp_cols])),na.rm = T)
+}
+
+reddit$dm1 <- ifelse(is.na(reddit$dm1), 0, reddit$dm1)
+reddit$dm2 <- ifelse(is.na(reddit$dm2), 0, reddit$dm2)
+
+##### tf-idf #####
+
+reddit[,c("troll_whight", "real_whight")] <- 0
+
+for (i in 1:nrow(reddit)) {
+  for (k in 1:nrow(words_ex_troll)){
+    temp_count <- sum(as.vector(unlist(reddit$tokens_reg[i])) %in% words_ex_troll$term[k])*words_ex_troll$diff[k]
+    reddit$troll_whight[i] <- reddit$troll_whight[i]+temp_count
+  }
+  for (j in 1:nrow(words_ex_real)){
+    temp_count <- sum(as.vector(unlist(reddit$tokens_reg[i])) %in% words_ex_real$term[j])*words_ex_real$diff[j]
+    reddit$real_whight[i] <- reddit$real_whight[i]+temp_count
+  }
+}
+
+##### Uppercases #####
+
+for (i in 1:nrow(reddit)){
+  reddit$upper_s[i] <-  sum(str_detect(as.vector(unlist(reddit$tokens_reg[i])),"[[:upper:]]")) / length(as.vector(unlist(reddit$tokens_reg[i])))
+  reddit$upper_w[i] <- sum(upper.case(as.vector(unlist(reddit$tokens_reg[i])))) / length(as.vector(unlist(reddit$tokens_reg[i])))
+}
+
+
+##### Swears #####
+
+reddit$swears <- 0
+
+for (i in 1:nrow(reddit)) {
+  for (k in 1:length(swears)){
+    temp_count <- sum(as.vector(unlist(reddit$tokens_clean[i])) %in% swears[k])
+    reddit$swears[i] <- reddit$swears[i]+temp_count
+    reddit$swears_s[i] <- reddit$swears[i] / length(as.vector(unlist(reddit$tokens_clean[i])))
+  }}
+
+
+#### Number of words #####
+
+for (i in 1:nrow(reddit)) {
+  reddit$num_words[i] <- length(as.vector(unlist(reddit$tokens[i])))}
+
+
+##### Positive-Negative #####
+
+reddit$positive <- 0
+reddit$positive_s <- 0
+reddit$negative <- 0
+reddit$negative_s <- 0
+
+for (i in 1:nrow(reddit)) {
+  for (k in 1:length(positive)){
+    temp_count <- sum(as.vector(unlist(reddit$tokens_clean[i])) %in% positive[k])
+    reddit$positive[i] <- reddit$positive[i]+temp_count
+    reddit$positive_s[i] <- reddit$positive[i] / length(as.vector(unlist(reddit$tokens_clean[i])))
+  }
+}
+
+for (i in 1:nrow(reddit)) {
+  for (k in 1:length(negative)){
+    temp_count <- sum(as.vector(unlist(reddit$tokens_clean[i])) %in% negative[k])
+    reddit$negative[i] <- reddit$negative[i]+temp_count
+    reddit$negative_s[i] <- reddit$negative[i] / length(as.vector(unlist(reddit$tokens_clean[i])))
+  }
+}
+
+
+##### Predict #####
+
+reddit_pred <- predict(rf_fit,
+                       newdata = reddit[,top9],
+                       type="prob")
+
+reddit_pred$bi <- as.factor(ifelse(reddit_pred[2]>0.4,1,0))
+reddit_con <- confusionMatrix(reddit_pred$bi, as.factor(reddit$label))
+
+reddit_table <- as.table(matrix(as.vector(reddit_con$table), nrow = 2, byrow = TRUE, ))
+reddit_table <- t(reddit_table)
+reddit_conf <- fourfoldplot(reddit_table, color = c( "#00A4D1", "#FFFE81"), std = "all.max",
+                        conf.level = 0, margin = 1, main = "Confusion Matrix For Predicting Reddit Data")
+
+
+reddit_predict <- data.frame(Id = 1:nrow(reddit_pred), Category= as.numeric(reddit_pred$bi))
+reddit_predict$Category[reddit_predict$Category==1] <- 0
+reddit_predict$Category[reddit_predict$Category==2] <- 1
+reddit_predict$label <- reddit$label
+mean(reddit_predict$Category)
+mean(reddit_predict$label)
+
+write.csv(file = "reddit_predict.csv", reddit_predict)
+
+
+
+```
